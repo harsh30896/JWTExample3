@@ -1,8 +1,11 @@
 package com.jwt.example.controller;
 
+import com.jwt.example.entity.User;
 import com.jwt.example.model.JwtRequest;
 import com.jwt.example.model.JwtResponse;
+import com.jwt.example.repositories.UserRepo;
 import com.jwt.example.security.JwtHelper;
+import com.jwt.example.service.UserService;
 import org.apache.el.parser.Token;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,11 +29,14 @@ public class AuthController {
     @Autowired
     private JwtHelper helper;
 
+    @Autowired
+    private UserService userService;
+
     private Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@RequestBody JwtRequest request){
-        this.doAuthenticate(request.getEmail(), request.getPassword());
+       doAuthenticate(request.getEmail(), request.getPassword());
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
         String token = this.helper.generateToken(userDetails);
         JwtResponse response = JwtResponse.builder()
@@ -46,12 +52,17 @@ public class AuthController {
         try{
             manager.authenticate(authentication);
         }catch (BadCredentialsException e){
-            throw new RuntimeException("Invalid UserName or Password !!");
+            throw new BadCredentialsException("Invalid UserName or Password !!");
         }
     }
     @ExceptionHandler(BadCredentialsException.class)
     public String exceptionHandler() {
         return "Credentials Invalid !!";
+    }
+
+    @PostMapping("/createUser")
+    public User createUser(@RequestBody User user){
+        return userService.createUser(user);
     }
 
 }
